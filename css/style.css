@@ -101,6 +101,7 @@ body {
 }
 
 .chat-header__avatar {
+  position: relative;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -110,6 +111,23 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.avatar-online {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  background: #2ecc71;
+  border-radius: 50%;
+  border: 2px solid #1a1a2e;
+  animation: online-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes online-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46,204,113,.5); }
+  50%       { box-shadow: 0 0 0 4px rgba(46,204,113,0); }
 }
 
 .chat-header__title {
