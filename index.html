@@ -7,13 +7,27 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="chat-window">
+  <div class="chat-window" id="chat-window">
     <div class="chat-header">
-      Assistant Logis
-      <div class="chat-header__sub">Trouvez la peinture qu'il vous faut</div>
+      <button class="chat-close-btn" id="chat-close" aria-label="Fermer le chat">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="chat-header__title">
+        Assistant Logis
+        <div class="chat-header__sub">Trouvez la peinture qu'il vous faut</div>
+      </div>
     </div>
     <div id="chat-messages"></div>
   </div>
+
+  <button class="chat-fab" id="chat-fab" aria-label="Ouvrir le chat">
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+      <path d="M3 3h20a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H8l-5 4V4a1 1 0 0 1 1-1z" fill="currentColor"/>
+    </svg>
+  </button>
+
   <script type="module" src="js/ui.js"></script>
 </body>
 </html>

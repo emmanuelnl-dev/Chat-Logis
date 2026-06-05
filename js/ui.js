@@ -1,7 +1,34 @@
 import { init, dispatch } from './chatbot.js'
 
-const chat = document.getElementById('chat-messages')
+const chat        = document.getElementById('chat-messages')
+const chatWindow  = document.getElementById('chat-window')
+const fab         = document.getElementById('chat-fab')
+const closeBtn    = document.getElementById('chat-close')
+
 const NUANCIER_PREVIEW_COUNT = 5
+
+// ── Ouverture / fermeture ─────────────────────────────────────────────────
+
+let started = false
+
+function openChat() {
+  chatWindow.classList.add('is-open')
+  fab.classList.add('is-open')
+  fab.setAttribute('aria-label', 'Fermer le chat')
+  if (!started) { started = true; start() }
+}
+
+function closeChat() {
+  chatWindow.classList.remove('is-open')
+  fab.classList.remove('is-open')
+  fab.setAttribute('aria-label', 'Ouvrir le chat')
+}
+
+fab.addEventListener('click', () => {
+  chatWindow.classList.contains('is-open') ? closeChat() : openChat()
+})
+
+closeBtn.addEventListener('click', closeChat)
 
 // ── Rendu des bulles ──────────────────────────────────────────────────────
 
@@ -231,5 +258,3 @@ async function start() {
   const response = await init()
   withTyping(() => handle(response))
 }
-
-start()
