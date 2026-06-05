@@ -74,7 +74,7 @@ body {
   padding: 14px 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   flex-shrink: 0;
 }
 
