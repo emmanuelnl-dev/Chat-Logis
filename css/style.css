@@ -40,6 +40,27 @@ body {
   background: #444;
 }
 
+.fab-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 14px;
+  height: 14px;
+  background: #e74c3c;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  animation: badge-pop .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+.fab-badge.is-hidden {
+  display: none;
+}
+
+@keyframes badge-pop {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
+
 /* ── Fenêtre chat ──────────────────────────────────────────────────────── */
 
 .chat-window {

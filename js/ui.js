@@ -4,6 +4,7 @@ const chat        = document.getElementById('chat-messages')
 const chatWindow  = document.getElementById('chat-window')
 const fab         = document.getElementById('chat-fab')
 const closeBtn    = document.getElementById('chat-close')
+const badge       = document.getElementById('fab-badge')
 
 const NUANCIER_PREVIEW_COUNT = 5
 
@@ -15,6 +16,7 @@ function openChat() {
   chatWindow.classList.add('is-open')
   fab.classList.add('is-open')
   fab.setAttribute('aria-label', 'Fermer le chat')
+  badge.classList.add('is-hidden')
   if (!started) { started = true; start() }
 }
 
