@@ -97,7 +97,8 @@ function renderFiche(produit) {
       clearOptions()
       userBubble('Voir toutes les teintes')
       scrollBottom()
-      handle(dispatch('nuancier:complet'))
+      const response = dispatch('nuancier:complet')
+      withTyping(() => handle(response))
     })
   }
 
@@ -143,6 +144,33 @@ function renderTel({ numero, href, horaires }) {
 function scrollBottom() {
   requestAnimationFrame(() => {
     chat.scrollTop = chat.scrollHeight
+  })
+}
+
+// ── Indicateur de frappe ──────────────────────────────────────────────────
+
+function showTyping() {
+  const el = document.createElement('div')
+  el.className = 'bubble bubble--bot typing-indicator'
+  el.id = 'typing-indicator'
+  el.innerHTML = '<span></span><span></span><span></span>'
+  chat.appendChild(el)
+  scrollBottom()
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-indicator')
+  if (el) el.remove()
+}
+
+function withTyping(fn) {
+  showTyping()
+  return new Promise(resolve => {
+    setTimeout(() => {
+      hideTyping()
+      fn()
+      resolve()
+    }, 1800 + Math.random() * 400) // 1800–2200ms pour varier légèrement
   })
 }
 
@@ -194,14 +222,14 @@ function handle(response) {
 
 function onUserChoice(value) {
   const response = dispatch(value)
-  handle(response)
+  withTyping(() => handle(response))
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
 
 async function start() {
   const response = await init()
-  handle(response)
+  withTyping(() => handle(response))
 }
 
 start()
