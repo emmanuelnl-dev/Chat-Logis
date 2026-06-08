@@ -90,13 +90,31 @@ function clearOptions() {
   })
 }
 
+function textColorForBg(hex) {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 140 ? '#1a1a2e' : '#ffffff'
+}
+
+function buildOptionBtn(opt) {
+  const btn = document.createElement('button')
+  btn.className = 'option-btn'
+  if (opt.color) {
+    btn.classList.add('option-btn--colored')
+    btn.style.background = opt.color
+    btn.style.color = textColorForBg(opt.color)
+    btn.style.borderColor = 'rgba(0,0,0,.15)'
+  }
+  btn.textContent = opt.label
+  return btn
+}
+
 function renderOptions(options, onSelect) {
   const row = document.createElement('div')
   row.className = 'options-row'
   options.forEach(opt => {
-    const btn = document.createElement('button')
-    btn.className = 'option-btn'
-    btn.textContent = opt.label
+    const btn = buildOptionBtn(opt)
     btn.addEventListener('click', () => {
       clearOptions()
       userBubble(opt.label)
@@ -112,10 +130,8 @@ function renderOptionsDisabled(options, selectedLabel) {
   const row = document.createElement('div')
   row.className = 'options-row'
   options.forEach(opt => {
-    const btn = document.createElement('button')
-    btn.className = 'option-btn'
+    const btn = buildOptionBtn(opt)
     if (opt.label === selectedLabel) btn.classList.add('option-btn--selected')
-    btn.textContent = opt.label
     btn.disabled = true
     row.appendChild(btn)
   })

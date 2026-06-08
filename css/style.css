@@ -19,7 +19,7 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #1a1a2e;
+  background: rgb(0,110,183);
   color: #fff;
   border: none;
   cursor: pointer;
@@ -37,7 +37,7 @@ body {
 }
 
 .chat-fab.is-open {
-  background: #444;
+  background: rgb(0,85,140);
 }
 
 .fab-badge {
@@ -90,7 +90,7 @@ body {
 }
 
 .chat-header {
-  background: #1a1a2e;
+  background: rgb(0,110,183);
   color: #fff;
   padding: 14px 20px;
   display: flex;
@@ -121,7 +121,7 @@ body {
   height: 10px;
   background: #2ecc71;
   border-radius: 50%;
-  border: 2px solid #1a1a2e;
+  border: 2px solid rgb(0,110,183);
   animation: online-pulse 2.5s ease-in-out infinite;
 }
 
@@ -243,13 +243,17 @@ body {
   padding: 6px 14px;
   font-size: 13px;
   cursor: pointer;
-  transition: background .15s, color .15s;
+  transition: background .15s, color .15s, filter .15s;
   white-space: nowrap;
 }
 
 .option-btn:hover {
   background: #1a1a2e;
   color: #fff;
+}
+
+.option-btn--colored:hover {
+  filter: brightness(.88);
 }
 
 .option-btn:disabled {

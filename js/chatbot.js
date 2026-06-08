@@ -18,6 +18,7 @@ const CONTACT_URL = '/nous-contacter'
 const LOGIS_DESCRIPTION = 'Logis est une marque française de peinture fondée en 1978. Nous proposons des gammes complètes pour tous vos projets de rénovation intérieure et extérieure, formulées en France avec des matières premières sélectionnées pour leur qualité et leur durabilité.'
 
 let _products = []
+let _families = []
 let state = {}
 
 function setState(patch) {
@@ -32,14 +33,14 @@ function resp(messages, options = null, extra = {}) {
   }
 }
 
-function opt(label, value) {
-  return { label, value }
+function opt(label, value, color = null) {
+  return color ? { label, value, color } : { label, value }
 }
 
 // ── Menu principal ─────────────────────────────────────────────────────────
 
 function menu() {
-  setState({ step: 'menu', filters: {}, famille: null, produit: null, source: null, produitsFiltres: [] })
+  setState({ step: 'menu', filters: {}, famille: null, familleName: null, produit: null, source: null, produitsFiltres: [] })
   return resp(
     'Bonjour ! Je suis l\'assistant Logis. Comment puis-je vous aider ?',
     [
@@ -142,23 +143,23 @@ function fromNoResult(value) {
 
 function goGammeFamilles() {
   setState({ step: 'gamme_familles' })
-  const familles = [...new Set(_products.map(p => p.famille))]
   return resp(
     'Voici nos familles de produits :',
     [
-      ...familles.map(f => opt(f, f)),
+      ..._families.map(f => opt(f.name, f.id)),
       opt('← Retour au menu', 'nav:menu'),
     ]
   )
 }
 
-function goGammeProduits(famille) {
-  setState({ step: 'gamme_produits', famille })
-  const produits = _products.filter(p => p.famille === famille)
+function goGammeProduits(familleId) {
+  const famille = _families.find(f => f.id === familleId)
+  if (!famille) return retourMenu()
+  setState({ step: 'gamme_produits', famille: familleId, familleName: famille.name })
   return resp(
-    `Produits de la gamme ${famille} :`,
+    `Produits de la gamme ${famille.name} :`,
     [
-      ...produits.map(p => opt(p.name, p.id)),
+      ...famille.products.map(p => opt(p.name, p.id, p.couleur_pot)),
       opt('← Retour aux familles', 'nav:familles'),
       opt('← Retour au menu',      'nav:menu'),
     ]
@@ -170,7 +171,7 @@ function goProduitsTous() {
   return resp(
     'Voici tous nos produits :',
     [
-      ..._products.map(p => opt(p.name, p.id)),
+      ..._products.map(p => opt(p.name, p.id, p.couleur_pot)),
       opt('← Retour au menu', 'nav:menu'),
     ]
   )
@@ -266,7 +267,7 @@ function goResultats() {
   return resp(
     `${produits.length} produits correspondent à votre recherche :`,
     [
-      ...produits.map(p => opt(p.name, p.id)),
+      ...produits.map(p => opt(p.name, p.id, p.couleur_pot)),
       opt('← Modifier la recherche', 'nav:choisir'),
       opt('← Retour au menu',        'nav:menu'),
     ]
@@ -290,7 +291,7 @@ function afficherFiche(produit, source) {
 function buildFicheNav(source) {
   const options = []
   if (source === 'gamme') {
-    options.push(opt(`← Retour à la gamme ${state.famille}`, 'nav:gamme'))
+    options.push(opt(`← Retour à la gamme ${state.familleName}`, 'nav:gamme'))
     options.push(opt('← Retour aux familles', 'nav:familles'))
   } else if (source === 'produits') {
     options.push(opt('← Retour à la liste', 'nav:produits'))
@@ -346,6 +347,7 @@ function goContacter() {
 // ── API publique ──────────────────────────────────────────────────────────
 
 export async function init() {
+  _families = await fetchFamilles()
   _products = await fetchProducts()
   try {
     const saved = sessionStorage.getItem(SESSION_KEY)
