@@ -268,13 +268,47 @@ const FAMILIES = [
   },
 ]
 
-// Interface à respecter — ne pas accéder à FAMILIES directement depuis l'extérieur.
-// Remplacer les corps de ces fonctions par des fetch() quand l'API sera prête.
-
-export async function fetchFamilles() {
-  return Promise.resolve(FAMILIES)
+const FILTRES = {
+  supports: [
+    { label: 'Mur / Béton', value: 'mur' },
+    { label: 'Bois',        value: 'bois' },
+    { label: 'Métal',       value: 'métal' },
+    { label: 'Plâtre',      value: 'plâtre' },
+    { label: 'Béton',       value: 'béton' },
+  ],
+  usages: [
+    { label: 'Intérieur',              value: 'interieur' },
+    { label: 'Extérieur',              value: 'exterieur' },
+    { label: 'Intérieur et extérieur', value: 'les-deux' },
+  ],
+  finitions: [
+    { label: 'Mat',      value: 'mat' },
+    { label: 'Satiné',   value: 'satiné' },
+    { label: 'Brillant', value: 'brillant' },
+  ],
 }
 
-export async function fetchProducts() {
-  return Promise.resolve(FAMILIES.flatMap(f => f.products.map(p => ({ ...p, famille: f.name }))))
+export function fetchFiltres() {
+  return new Promise((resolve) => {
+    $.get('/aj/Products:Views/ajGetFilters/:Extensions', {}, function(d) {
+      resolve(d)
+    }).fail(() => resolve(FILTRES))
+  })
+}
+
+export function fetchFamilles() {
+  return new Promise((resolve) => {
+    $.get('/aj/ProductCategories:Views/ajGetCategories/:Extensions', {}, function(d) {
+      resolve(d)
+    }).fail(() => resolve(FAMILIES))
+  })
+}
+
+export function fetchProducts() {
+  const fallback = FAMILIES.flatMap(f => f.products.map(p => ({ ...p, famille: f.name })))
+  return new Promise((resolve) => {
+    $.get('/aj/Products:Views/ajGetProducts/:Extensions', {}, function(d) {
+      resolve(d)
+    }).fail(() => resolve(fallback))
+  })
 }

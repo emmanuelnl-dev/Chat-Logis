@@ -1,4 +1,4 @@
-import { fetchProducts, fetchFamilles } from './data.js'
+import { fetchProducts, fetchFamilles, fetchFiltres } from './data.js'
 
 const SESSION_KEY = 'logis_chat_state'
 
@@ -19,6 +19,9 @@ const LOGIS_DESCRIPTION = 'Logis est une marque française de peinture fondée e
 
 let _products = []
 let _families = []
+let _supports = []
+let _usages   = []
+let _finitions = []
 let state = {}
 
 function setState(patch) {
@@ -182,11 +185,7 @@ function goChoixSupport() {
   return resp(
     'Quel type de surface souhaitez-vous peindre ?',
     [
-      opt('Mur / Béton', 'mur'),
-      opt('Bois',        'bois'),
-      opt('Métal',       'métal'),
-      opt('Plâtre',      'plâtre'),
-      opt('Béton',       'béton'),
+      ..._supports.map(s => opt(s.label, s.value)),
       opt('← Retour au menu', 'nav:menu'),
     ]
   )
@@ -197,11 +196,9 @@ function goChoixUsage() {
   return resp(
     'Pour quel usage ?',
     [
-      opt('Intérieur',             'interieur'),
-      opt('Extérieur',             'exterieur'),
-      opt('Intérieur et extérieur', 'les-deux'),
-      opt('← Changer le support',  'nav:support'),
-      opt('← Retour au menu',      'nav:menu'),
+      ..._usages.map(u => opt(u.label, u.value)),
+      opt('← Changer le support', 'nav:support'),
+      opt('← Retour au menu',     'nav:menu'),
     ]
   )
 }
@@ -210,7 +207,6 @@ function goChoixFinition() {
   setState({ step: 'choix_finition' })
   const { support, usage } = state.filters
 
-  // Filtrage partiel pour ne proposer que les finitions disponibles
   const candidats = _products.filter(p => {
     const matchSupport = p.supports.includes(support) || p.supports.includes('mur')
     const matchUsage = usage === 'les-deux'
@@ -219,15 +215,15 @@ function goChoixFinition() {
     return matchSupport && matchUsage
   })
 
-  const finitionsDispo = [...new Set(candidats.flatMap(p => p.finitions))]
-  const finitionsLabels = { mat: 'Mat', satiné: 'Satiné', brillant: 'Brillant' }
+  const finitionsDispo = new Set(candidats.flatMap(p => p.finitions))
+  const finitionsOpts  = _finitions.filter(f => finitionsDispo.has(f.value))
 
   return resp(
     'Quelle finition souhaitez-vous ?',
     [
-      ...finitionsDispo.map(f => opt(finitionsLabels[f] || f, f)),
-      opt('← Changer l\'usage',  'nav:usage'),
-      opt('← Retour au menu',    'nav:menu'),
+      ...finitionsOpts.map(f => opt(f.label, f.value)),
+      opt('← Changer l\'usage', 'nav:usage'),
+      opt('← Retour au menu',   'nav:menu'),
     ]
   )
 }
@@ -347,6 +343,10 @@ function goContacter() {
 // ── API publique ──────────────────────────────────────────────────────────
 
 export async function init() {
+  const filtres = await fetchFiltres()
+  _supports  = filtres.supports
+  _usages    = filtres.usages
+  _finitions = filtres.finitions
   _families = await fetchFamilles()
   _products = await fetchProducts()
   try {

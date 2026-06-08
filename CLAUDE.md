@@ -4,7 +4,7 @@
 
 Chatbot sans IA pour une entreprise de peinture. Guide l'utilisateur via un arbre de décision pour trouver le produit adapté à son besoin, puis affiche la fiche produit complète.
 
-Stack : HTML / CSS / JS vanilla, aucun framework, aucun backend pour l'instant.
+Stack : HTML / CSS / JS vanilla, jQuery (fourni par le site hôte, CDN en dev), aucun backend propre.
 
 ## Structure du projet
 
@@ -14,7 +14,7 @@ chat/
 ├── css/
 │   └── style.css       ← styles : fenêtre chat, bulles, cartes, FAB, animations
 ├── js/
-│   ├── data.js         ← catalogue produits (JSON statique, remplacé par API à terme)
+│   ├── data.js         ← couche données : appels jQuery $.get() vers l'API du site hôte + fallback statique
 │   ├── chatbot.js      ← moteur de conversation (machine à états + filtrage, zéro DOM)
 │   └── ui.js           ← rendu DOM : bulles, cartes produit, pastilles nuancier, open/close
 ```
@@ -74,16 +74,24 @@ Chaque fonction d'état retourne un objet `response` :
 
 ## Couche données — règle importante
 
-`data.js` expose `fetchProducts()` qui retourne une `Promise<Product[]>`.
-Aujourd'hui elle résout avec le JSON statique local. À terme, elle appellera une API REST.
-**Ne jamais accéder au tableau de produits directement** — toujours passer par `fetchProducts()`.
+`data.js` expose trois fonctions, toutes retournant une `Promise` :
+
+- `fetchFiltres()` → `{ supports, usages, finitions }` — options des filtres du parcours
+- `fetchFamilles()` → familles avec leurs produits embarqués
+- `fetchProducts()` → liste à plat de tous les produits (champ `famille` ajouté)
+
+Chaque fonction appelle l'API du site hôte via jQuery `$.get()` et bascule sur les données statiques locales en cas d'échec. **Ne jamais accéder aux tableaux statiques directement** — toujours passer par ces fonctions.
 
 ```js
-export async function fetchProducts() {
-  // TODO: remplacer par fetch('/api/products') quand l'API sera prête
-  return Promise.resolve(PRODUCTS)
+export function fetchProducts() {
+  const fallback = FAMILIES.flatMap(f => f.products.map(p => ({ ...p, famille: f.name })))
+  return new Promise((resolve) => {
+    $.get('/aj/Products:Views/ajGetProducts/:Extensions', {}, resolve).fail(() => resolve(fallback))
+  })
 }
 ```
+
+jQuery doit être chargé avant `js/ui.js`. En développement local, il est inclus via CDN dans `index.html`.
 
 ## UI — éléments notables
 
