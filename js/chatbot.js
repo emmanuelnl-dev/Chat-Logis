@@ -1,5 +1,15 @@
 import { fetchProducts, fetchFamilles } from './data.js'
 
+const SESSION_KEY = 'logis_chat_state'
+
+function saveState() {
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(state)) } catch (_) {}
+}
+
+export function clearSession() {
+  try { sessionStorage.removeItem(SESSION_KEY) } catch (_) {}
+}
+
 const PHONE = '01 23 45 67 89'
 const PHONE_HREF = 'tel:+33123456789'
 const PHONE_HORAIRES = 'Du lundi au vendredi, 8h – 18h'
@@ -337,22 +347,33 @@ function goContacter() {
 
 export async function init() {
   _products = await fetchProducts()
+  try {
+    const saved = sessionStorage.getItem(SESSION_KEY)
+    if (saved) {
+      state = JSON.parse(saved)
+      return null
+    }
+  } catch (_) {}
   return menu()
 }
 
 export function dispatch(value) {
-  switch (state.step) {
-    case 'menu':           return fromMenu(value)
-    case 'gamme_familles': return fromGammeFamilles(value)
-    case 'gamme_produits': return fromGammeProduits(value)
-    case 'produits_tous':  return fromProduitsTous(value)
-    case 'choix_support':  return fromSupport(value)
-    case 'choix_usage':    return fromUsage(value)
-    case 'choix_finition': return fromFinition(value)
-    case 'resultats':      return fromResultats(value)
-    case 'fiche':          return fromFiche(value)
-    case 'nuancier':       return fromNuancier(value)
-    case 'no_result':      return fromNoResult(value)
-    default:               return menu()
-  }
+  const response = (() => {
+    switch (state.step) {
+      case 'menu':           return fromMenu(value)
+      case 'gamme_familles': return fromGammeFamilles(value)
+      case 'gamme_produits': return fromGammeProduits(value)
+      case 'produits_tous':  return fromProduitsTous(value)
+      case 'choix_support':  return fromSupport(value)
+      case 'choix_usage':    return fromUsage(value)
+      case 'choix_finition': return fromFinition(value)
+      case 'resultats':      return fromResultats(value)
+      case 'fiche':          return fromFiche(value)
+      case 'nuancier':       return fromNuancier(value)
+      case 'no_result':      return fromNoResult(value)
+      default:               return menu()
+    }
+  })()
+  saveState()
+  return response
 }

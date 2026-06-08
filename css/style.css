@@ -144,6 +144,7 @@ body {
   margin-top: 2px;
 }
 
+.chat-reset-btn,
 .chat-close-btn {
   background: rgba(255,255,255,.12);
   border: none;
@@ -159,6 +160,7 @@ body {
   transition: background .15s;
 }
 
+.chat-reset-btn:hover,
 .chat-close-btn:hover {
   background: rgba(255,255,255,.25);
 }
@@ -254,6 +256,12 @@ body {
   opacity: .35;
   cursor: default;
   pointer-events: none;
+}
+
+.option-btn--selected:disabled {
+  background: #1a1a2e;
+  color: #fff;
+  opacity: .55;
 }
 
 /* ── Carte produit ──────────────────────────────────────────────────────── */

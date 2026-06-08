@@ -1,12 +1,40 @@
-import { init, dispatch } from './chatbot.js'
+import { init, dispatch, clearSession } from './chatbot.js'
 
 const chat        = document.getElementById('chat-messages')
 const chatWindow  = document.getElementById('chat-window')
 const fab         = document.getElementById('chat-fab')
 const closeBtn    = document.getElementById('chat-close')
+const resetBtn    = document.getElementById('chat-reset')
 const badge       = document.getElementById('fab-badge')
 
 const NUANCIER_PREVIEW_COUNT = 5
+const HISTORY_KEY = 'logis_chat_history'
+
+// ── Historique (sessionStorage) ───────────────────────────────────────────
+
+function saveHistory(data) {
+  try { sessionStorage.setItem(HISTORY_KEY, JSON.stringify(data)) } catch (_) {}
+}
+
+function loadHistory() {
+  try {
+    const s = sessionStorage.getItem(HISTORY_KEY)
+    return s ? JSON.parse(s) : null
+  } catch (_) { return null }
+}
+
+function clearHistory() {
+  try { sessionStorage.removeItem(HISTORY_KEY) } catch (_) {}
+}
+
+function commitChoice(label) {
+  const h = loadHistory()
+  if (h && h.current) {
+    h.turns.push({ ...h.current, userLabel: label })
+    h.current = null
+    saveHistory(h)
+  }
+}
 
 // ── Ouverture / fermeture ─────────────────────────────────────────────────
 
@@ -31,6 +59,14 @@ fab.addEventListener('click', () => {
 })
 
 closeBtn.addEventListener('click', closeChat)
+
+resetBtn.addEventListener('click', async () => {
+  clearSession()
+  clearHistory()
+  chat.innerHTML = ''
+  const response = await init()
+  withTyping(() => handle(response))
+})
 
 // ── Rendu des bulles ──────────────────────────────────────────────────────
 
@@ -72,9 +108,23 @@ function renderOptions(options, onSelect) {
   chat.appendChild(row)
 }
 
+function renderOptionsDisabled(options, selectedLabel) {
+  const row = document.createElement('div')
+  row.className = 'options-row'
+  options.forEach(opt => {
+    const btn = document.createElement('button')
+    btn.className = 'option-btn'
+    if (opt.label === selectedLabel) btn.classList.add('option-btn--selected')
+    btn.textContent = opt.label
+    btn.disabled = true
+    row.appendChild(btn)
+  })
+  chat.appendChild(row)
+}
+
 // ── Carte produit ─────────────────────────────────────────────────────────
 
-function renderFiche(produit) {
+function renderFiche(produit, historical = false) {
   const card = document.createElement('div')
   card.className = 'card-produit'
 
@@ -121,14 +171,17 @@ function renderFiche(produit) {
   `
 
   const moreBtn = card.querySelector('.nuancier-more')
-  if (moreBtn) {
+  if (moreBtn && !historical) {
     moreBtn.addEventListener('click', () => {
       clearOptions()
       userBubble('Voir toutes les teintes')
       scrollBottom()
+      commitChoice('Voir toutes les teintes')
       const response = dispatch('nuancier:complet')
       withTyping(() => handle(response))
     })
+  } else if (moreBtn) {
+    moreBtn.disabled = true
   }
 
   chat.appendChild(card)
@@ -199,8 +252,27 @@ function withTyping(fn) {
       hideTyping()
       fn()
       resolve()
-    }, 1800 + Math.random() * 400) // 1800–2200ms pour varier légèrement
+    }, 1800 + Math.random() * 400)
   })
+}
+
+// ── Restauration depuis l'historique ─────────────────────────────────────
+
+function restoreTurn(turn) {
+  turn.botMessages.forEach(m => botBubble(m))
+  if (turn.type === 'fiche')    renderFiche(turn.data, true)
+  if (turn.type === 'nuancier') renderNuancier(turn.data)
+  if (turn.type === 'tel')      renderTel(turn.data)
+  if (turn.options.length > 0)  renderOptionsDisabled(turn.options, turn.userLabel)
+  if (turn.userLabel)           userBubble(turn.userLabel)
+}
+
+function restoreCurrent(current) {
+  current.botMessages.forEach(m => botBubble(m))
+  if (current.type === 'fiche')    renderFiche(current.data, false)
+  if (current.type === 'nuancier') renderNuancier(current.data)
+  if (current.type === 'tel')      renderTel(current.data)
+  if (current.options.length > 0)  renderOptions(current.options, onUserChoice)
 }
 
 // ── Orchestration ─────────────────────────────────────────────────────────
@@ -214,42 +286,36 @@ function handle(response) {
     }
     if (response.options) renderOptions(response.options, onUserChoice)
     scrollBottom()
-    // En production : window.location.href = response.data
-    return
-  }
-
-  if (response.type === 'fiche') {
+  } else if (response.type === 'fiche') {
     renderFiche(response.data)
     if (response.options) renderOptions(response.options, onUserChoice)
     scrollBottom()
-    return
-  }
-
-  if (response.type === 'nuancier') {
+  } else if (response.type === 'nuancier') {
     renderNuancier(response.data)
     if (response.options) renderOptions(response.options, onUserChoice)
     scrollBottom()
-    return
-  }
-
-  if (response.type === 'tel') {
+  } else if (response.type === 'tel') {
     renderTel(response.data)
     if (response.options) renderOptions(response.options, onUserChoice)
     scrollBottom()
-    return
+  } else {
+    if (response.messages) response.messages.forEach(m => m && botBubble(m))
+    if (response.options)  renderOptions(response.options, onUserChoice)
+    scrollBottom()
   }
 
-  // Réponse standard : messages + options
-  if (response.messages) {
-    response.messages.forEach(m => m && botBubble(m))
+  const h = loadHistory() || { turns: [] }
+  h.current = {
+    botMessages: response.messages ? response.messages.filter(Boolean) : [],
+    type: response.type || null,
+    data: response.data || null,
+    options: response.options || [],
   }
-  if (response.options) {
-    renderOptions(response.options, onUserChoice)
-  }
-  scrollBottom()
+  saveHistory(h)
 }
 
-function onUserChoice(value) {
+function onUserChoice(value, label) {
+  commitChoice(label)
   const response = dispatch(value)
   withTyping(() => handle(response))
 }
@@ -257,6 +323,23 @@ function onUserChoice(value) {
 // ── Init ──────────────────────────────────────────────────────────────────
 
 async function start() {
-  const response = await init()
-  withTyping(() => handle(response))
+  const initResponse = await init()
+
+  if (initResponse === null) {
+    const h = loadHistory()
+    if (h && (h.turns.length > 0 || h.current)) {
+      h.turns.forEach(turn => restoreTurn(turn))
+      if (h.current) restoreCurrent(h.current)
+      scrollBottom()
+      return
+    }
+    // Session orpheline (état sans historique) — repart à zéro
+    clearSession()
+    clearHistory()
+    const freshResponse = await init()
+    withTyping(() => handle(freshResponse))
+    return
+  }
+
+  withTyping(() => handle(initResponse))
 }
