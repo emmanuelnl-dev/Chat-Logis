@@ -61,6 +61,7 @@ fab.addEventListener('click', () => {
 closeBtn.addEventListener('click', closeChat)
 
 resetBtn.addEventListener('click', async () => {
+  if (!confirm('Recommencer la conversation ? Les échanges en cours seront perdus.')) return
   clearSession()
   clearHistory()
   chat.innerHTML = ''
@@ -168,6 +169,24 @@ function renderFiche(produit, historical = false) {
       </span>
     </div>
     <div class="card-produit__section">
+      <span class="section-label">Supports</span>
+      <div class="tag-list">
+        ${produit.supports.map(s => `<span class="product-tag">${s}</span>`).join('')}
+      </div>
+    </div>
+    <div class="card-produit__section">
+      <span class="section-label">Usages</span>
+      <div class="tag-list">
+        ${produit.usages.map(u => `<span class="product-tag">${u}</span>`).join('')}
+      </div>
+    </div>
+    <div class="card-produit__section">
+      <span class="section-label">Finitions</span>
+      <div class="tag-list">
+        ${produit.finitions.map(f => `<span class="product-tag">${f}</span>`).join('')}
+      </div>
+    </div>
+    <div class="card-produit__section">
       <span class="section-label">Contenances</span>
       <div class="contenances">
         ${produit.contenances.map(c => `<span class="contenance-tag">${c}</span>`).join('')}
@@ -183,6 +202,9 @@ function renderFiche(produit, historical = false) {
         `).join('')}
         ${hasMore ? `<button class="nuancier-more" data-action="nuancier:complet">+${restant} teintes</button>` : ''}
       </div>
+    </div>
+    <div class="card-produit__footer">
+      <a class="card-produit__more-link" href="/produit/${produit.id}" target="_blank" rel="noopener">En savoir plus →</a>
     </div>
   `
 
